@@ -1,0 +1,20 @@
+[
+  {
+    "name": "MyApp",
+    "bundle_id": "com.yourcompany.myapp",
+    "versions": [
+      {
+        "version": "1.0.1",
+        "date": "2026-05-07",
+        "size": "372 MB",
+        "manifest_url": "https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/manifests/1.0.1.plist"
+      },
+      {
+        "version": "1.0.0",
+        "date": "2026-04-20",
+        "size": "368 MB",
+        "manifest_url": "https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/manifests/1.0.0.plist"
+      }
+    ]
+  }
+]
