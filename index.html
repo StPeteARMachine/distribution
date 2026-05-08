@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IPA Drop — OTA Distributor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f6f2;
+  --card: #ffffff;
+  --ink: #1a1916;
+  --muted: #8a8880;
+  --border: #e4e2dc;
+  --accent: #e8500a;
+  --accent-light: #fff0ea;
+  --accent2: #2563eb;
+  --success: #16a34a;
+  --success-light: #f0fdf4;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Outfit', sans-serif;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.10);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 4rem;
+}
+
+/* subtle dot grid */
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background-image: radial-gradient(circle, #c8c4bc 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.35;
+  pointer-events:none;
+  z-index:0;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── HEADER ── */
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: fadeDown .4s ease both;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .75rem;
+}
+
+.logo-icon {
+  width: 40px; height: 40px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.logo-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+header p {
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 400;
+}
+
+/* ── SETUP PANEL ── */
+.setup-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  animation: fadeUp .4s ease both .05s;
+}
+
+.setup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.setup-header h3 {
+  font-size: .85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.setup-status {
+  font-size: .75rem;
+  font-family: var(--mono);
+  padding: .2rem .6rem;
+  border-radius: 100px;
+  background: #fee2e2;
+  color: #dc2626;
+  transition: all .2s;
+}
+.setup-status.ok { background: #dcfce7; color: var(--success); }
+
+.setup-body { display: flex; flex-direction: column; gap: .9rem; }
+.setup-body.collapsed { display: none; }
+
+.field label {
+  display: block;
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: .35rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.field input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .65rem .85rem;
+  font-family: var(--mono);
+  font-size: .82rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.field input:focus {
+  border-color: var(--accent2);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+.field-hint {
+  font-size: .72rem;
+  color: var(--muted);
+  margin-top: .3rem;
+  line-height: 1.5;
+}
+
+.field-hint a { color: var(--accent2); text-decoration: none; }
+.field-hint a:hover { text-decoration: underline; }
+
+.save-btn {
+  padding: .6rem 1.2rem;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  align-self: flex-start;
+}
+.save-btn:hover { opacity: .85; }
+.save-btn:active { transform: scale(.98); }
+
+/* ── DROP ZONE ── */
+.drop-zone {
+  background: var(--card);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s, transform .15s;
+  animation: fadeUp .4s ease both .1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.drop-zone.drag-over { border-style: solid; }
+
+.drop-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+  transition: transform .2s;
+}
+.drop-zone:hover .drop-icon, .drop-zone.drag-over .drop-icon {
+  transform: scale(1.1) translateY(-3px);
+}
+
+.drop-zone h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  margin-bottom: .4rem;
+}
+
+.drop-zone p {
+  color: var(--muted);
+  font-size: .85rem;
+}
+
+.drop-zone p span {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+#fileInput { display: none; }
+
+/* ── PROGRESS CARD ── */
+.progress-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.75rem;
+  margin-top: 1.25rem;
+  display: none;
+  animation: fadeUp .3s ease both;
+}
+
+.progress-card.visible { display: block; }
+
+.ipa-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+}
+
+.ipa-icon {
+  width: 48px; height: 48px;
+  background: var(--accent-light);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.ipa-details { min-width: 0; }
+.ipa-name {
+  font-weight: 600;
+  font-size: .95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ipa-size { color: var(--muted); font-size: .8rem; margin-top: .15rem; }
+
+/* Steps list */
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  margin-bottom: 1.4rem;
+}
+
+.step-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .55rem .7rem;
+  border-radius: 8px;
+  transition: background .2s;
+  font-size: .85rem;
+}
+
+.step-row.active { background: #fef9f7; }
+.step-row.done { opacity: .6; }
+.step-row.error-step { background: #fef2f2; }
+
+.step-dot {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem;
+  transition: all .2s;
+}
+.step-row.active .step-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  animation: pulse 1s ease-in-out infinite;
+}
+.step-row.done .step-dot {
+  border-color: var(--success);
+  background: var(--success);
+  color: #fff;
+}
+.step-row.error-step .step-dot {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+@keyframes pulse {
+  0%,100%{box-shadow:0 0 0 0 rgba(232,80,10,.4)}
+  50%{box-shadow:0 0 0 6px rgba(232,80,10,0)}
+}
+
+.step-label { flex: 1; }
+.step-sub { font-size: .72rem; color: var(--muted); margin-top: .1rem; }
+
+/* Progress bar */
+.progress-bar-wrap {
+  background: var(--bg);
+  border-radius: 100px;
+  height: 6px;
+  margin-bottom: 1.4rem;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #ff8c5a);
+  border-radius: 100px;
+  transition: width .4s ease;
+  width: 0%;
+}
+
+/* ── RESULT CARD ── */
+.result-card {
+  background: var(--success-light);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  margin-top: 1.25rem;
+  display: none;
+  animation: fadeUp .3s ease both;
+  text-align: center;
+}
+.result-card.visible { display: block; }
+
+.result-icon { font-size: 2.5rem; margin-bottom: .75rem; display: block; }
+.result-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: .4rem;
+  color: var(--success);
+}
+.result-card p {
+  font-size: .85rem;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+
+.link-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.link-box input {
+  flex: 1;
+  border: none;
+  padding: .75rem 1rem;
+  font-family: var(--mono);
+  font-size: .78rem;
+  color: var(--ink);
+  background: transparent;
+  outline: none;
+  min-width: 0;
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  padding: .75rem 1rem;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  font-family: var(--sans);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.copy-btn:hover { background: #333; }
+.copy-btn.copied { background: var(--success); }
+
+.qr-wrap { margin: .75rem 0; }
+.qr-wrap canvas { border-radius: 8px; }
+
+.install-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .7rem 1.4rem;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: .9rem;
+  transition: opacity .15s, transform .1s;
+  margin-top: .5rem;
+}
+.install-link-btn:hover { opacity: .9; transform: translateY(-1px); }
+
+.new-upload-btn {
+  margin-top: 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .55rem 1rem;
+  font-family: var(--sans);
+  font-size: .82rem;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all .15s;
+}
+.new-upload-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ── ERROR ── */
+.error-msg {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: .9rem 1rem;
+  font-size: .82rem;
+  color: #dc2626;
+  margin-top: .75rem;
+  display: none;
+  line-height: 1.5;
+}
+.error-msg.visible { display: block; }
+
+/* ── ANIMS ── */
+@keyframes fadeUp {
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes fadeDown {
+  from{opacity:0;transform:translateY(-12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── FOOTER ── */
+footer {
+  margin-top: 2.5rem;
+  text-align: center;
+  font-size: .75rem;
+  color: var(--muted);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">✈</div>
+      <span class="logo-text">IPA Drop</span>
+    </div>
+    <p>Drag an Ad Hoc .ipa — get an install link instantly</p>
+  </header>
+
+  <!-- SETUP PANEL -->
+  <div class="setup-panel" id="setupPanel">
+    <div class="setup-header" onclick="toggleSetup()">
+      <h3>⚙ GitHub Setup</h3>
+      <span class="setup-status" id="setupStatus">Not configured</span>
+    </div>
+    <div class="setup-body" id="setupBody">
+      <div class="field">
+        <label>GitHub Personal Access Token</label>
+        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+        <div class="field-hint">
+          Needs <strong>repo</strong> scope only.
+          <a href="https://github.com/settings/tokens/new?scopes=repo&description=IPA+Drop" target="_blank">Create one here →</a>
+        </div>
+      </div>
+      <div class="field">
+        <label>GitHub Username</label>
+        <input type="text" id="ghUser" placeholder="your-username"/>
+      </div>
+      <div class="field">
+        <label>Repository Name</label>
+        <input type="text" id="ghRepo" placeholder="my-app-ota"/>
+        <div class="field-hint">Must be a <strong>public</strong> repo with GitHub Pages enabled (Settings → Pages → GitHub Actions). Create it if it doesn't exist yet.</div>
+      </div>
+      <button class="save-btn" onclick="saveConfig()">Save &amp; Verify</button>
+    </div>
+  </div>
+
+  <!-- DROP ZONE -->
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <span class="drop-icon">📦</span>
+    <h2>Drop your .ipa here</h2>
+    <p>or <span>click to browse</span> — Ad Hoc builds only</p>
+    <input type="file" id="fileInput" accept=".ipa"/>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-card" id="progressCard">
+    <div class="ipa-info">
+      <div class="ipa-icon">📦</div>
+      <div class="ipa-details">
+        <div class="ipa-name" id="ipaName">—</div>
+        <div class="ipa-size" id="ipaSize">—</div>
+      </div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="steps-list" id="stepsList"></div>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-card" id="resultCard">
+    <span class="result-icon">🎉</span>
+    <h3>Ready to install!</h3>
+    <p>Send this link to your testers — they open it in Safari on their iPhone or iPad.</p>
+    <div class="link-box">
+      <input type="text" id="installLinkInput" readonly/>
+      <button class="copy-btn" id="copyBtn" onclick="copyLink()">Copy</button>
+    </div>
+    <div class="qr-wrap" id="qrWrap"></div>
+    <br>
+    <button class="new-upload-btn" onclick="resetUI()">↩ Upload another build</button>
+  </div>
+
+</div>
+
+<footer>All processing happens in your browser. Your token is stored only in localStorage.</footer>
+
+<!-- QR library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let cfg = {};
+
+const STEPS = [
+  { id: 'parse',    label: 'Reading IPA metadata',       sub: 'Extracting Info.plist from zip' },
+  { id: 'release',  label: 'Creating GitHub Release',    sub: 'Uploading IPA as release asset' },
+  { id: 'upload',   label: 'Uploading .ipa',             sub: 'This may take a few minutes for large files' },
+  { id: 'manifest', label: 'Generating .plist manifest', sub: 'Writing install manifest to repo' },
+  { id: 'page',     label: 'Publishing install page',    sub: 'Committing and triggering Pages deploy' },
+];
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function loadConfig() {
+  try { cfg = JSON.parse(localStorage.getItem('ipaDrop_cfg') || '{}'); } catch(e) { cfg = {}; }
+  if (cfg.token) document.getElementById('ghToken').value = cfg.token;
+  if (cfg.user)  document.getElementById('ghUser').value  = cfg.user;
+  if (cfg.repo)  document.getElementById('ghRepo').value  = cfg.repo;
+  refreshSetupStatus();
+}
+
+function refreshSetupStatus() {
+  const ok = cfg.token && cfg.user && cfg.repo;
+  const el = document.getElementById('setupStatus');
+  el.textContent = ok ? '✓ Configured' : 'Not configured';
+  el.classList.toggle('ok', !!ok);
+  if (ok) {
+    document.getElementById('setupBody').classList.add('collapsed');
+  }
+}
+
+function toggleSetup() {
+  document.getElementById('setupBody').classList.toggle('collapsed');
+}
+
+async function saveConfig() {
+  const token = document.getElementById('ghToken').value.trim();
+  const user  = document.getElementById('ghUser').value.trim();
+  const repo  = document.getElementById('ghRepo').value.trim();
+  if (!token || !user || !repo) { alert('Please fill in all three fields.'); return; }
+
+  // Quick verify — check repo exists and token is valid
+  const btn = document.querySelector('.save-btn');
+  btn.textContent = 'Verifying…';
+  try {
+    const r = await ghFetch(`repos/${user}/${repo}`, token);
+    if (!r.ok) throw new Error(`Repo not found or token invalid (${r.status})`);
+    cfg = { token, user, repo };
+    localStorage.setItem('ipaDrop_cfg', JSON.stringify(cfg));
+    refreshSetupStatus();
+    btn.textContent = '✓ Saved!';
+    setTimeout(() => btn.textContent = 'Save & Verify', 2000);
+  } catch(e) {
+    alert('Error: ' + e.message + '\n\nMake sure:\n• The repo exists and is public\n• The token has repo scope');
+    btn.textContent = 'Save & Verify';
+  }
+}
+
+// ─── DRAG & DROP ─────────────────────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+// ─── MAIN FLOW ───────────────────────────────────────────────────────────────
+async function handleFile(file) {
+  if (!file.name.endsWith('.ipa')) { alert('Please drop a .ipa file.'); return; }
+  if (!cfg.token || !cfg.user || !cfg.repo) {
+    alert('Please configure your GitHub settings first (click the Setup section above).');
+    document.getElementById('setupBody').classList.remove('collapsed');
+    return;
+  }
+
+  resetUI(false);
+  showProgress(file);
+
+  try {
+    // 1. Parse IPA
+    setStep('parse', 'active');
+    const meta = await parseIPA(file);
+    setStep('parse', 'done');
+    setProgress(15);
+
+    const version   = meta.bundleVersion || '1.0';
+    const bundleId  = meta.bundleId      || 'com.unknown.app';
+    const appName   = meta.appName       || file.name.replace('.ipa','');
+    const tag       = `v${version}-${Date.now()}`;
+    const ipaAssetName = `${appName.replace(/\s+/g,'-')}-${version}.ipa`;
+
+    // 2. Create GitHub Release
+    setStep('release', 'active');
+    const releaseId = await createRelease(tag, appName, version);
+    setStep('release', 'done');
+    setProgress(25);
+
+    // 3. Upload IPA to release
+    setStep('upload', 'active');
+    const ipaUrl = await uploadAsset(releaseId, file, ipaAssetName, progress => {
+      setProgress(25 + Math.round(progress * 0.55)); // 25–80%
+    });
+    setStep('upload', 'done');
+    setProgress(80);
+
+    // 4. Generate and commit plist
+    setStep('manifest', 'active');
+    const pagesBase    = `https://${cfg.user}.github.io/${cfg.repo}`;
+    const manifestPath = `manifests/${tag}.plist`;
+    const manifestUrl  = `${pagesBase}/${manifestPath}`;
+    const plistContent = buildPlist(ipaUrl, bundleId, version, appName, pagesBase);
+    await commitFile(manifestPath, plistContent, `manifest: ${appName} ${version}`);
+    setStep('manifest', 'done');
+    setProgress(88);
+
+    // 5. Commit/update install page
+    setStep('page', 'active');
+    await ensureIndexPage(appName, version, manifestUrl);
+    setStep('page', 'done');
+    setProgress(100);
+
+    // Done — show result
+    const installUrl = `${pagesBase}/`;
+    showResult(installUrl, manifestUrl);
+
+  } catch(e) {
+    showError(e.message || String(e));
+  }
+}
+
+// ─── IPA PARSING ─────────────────────────────────────────────────────────────
+// Reads the zip (IPA is a zip), finds Payload/*.app/Info.plist
+async function parseIPA(file) {
+  // Use a minimal zip reader in pure JS
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  const plistXml = extractInfoPlist(bytes);
+  if (!plistXml) return {};
+  return parsePlistXml(plistXml);
+}
+
+function extractInfoPlist(bytes) {
+  // Find "Info.plist" entries in the zip central directory
+  // Walk through local file headers (signature 0x04034b50)
+  let i = 0;
+  while (i < bytes.length - 4) {
+    if (bytes[i]===0x50 && bytes[i+1]===0x4b && bytes[i+2]===0x03 && bytes[i+3]===0x04) {
+      const compression = readU16(bytes, i+8);
+      const compSize    = readU32(bytes, i+18);
+      const uncompSize  = readU32(bytes, i+22);
+      const nameLen     = readU16(bytes, i+26);
+      const extraLen    = readU16(bytes, i+28);
+      const name        = readStr(bytes, i+30, nameLen);
+      const dataStart   = i + 30 + nameLen + extraLen;
+
+      if (/^Payload\/[^/]+\.app\/Info\.plist$/.test(name)) {
+        let data;
+        if (compression === 0) {
+          data = bytes.slice(dataStart, dataStart + uncompSize);
+        } else if (compression === 8) {
+          try {
+            const compressed = bytes.slice(dataStart, dataStart + compSize);
+            data = inflateRaw(compressed, uncompSize);
+          } catch(e) { return null; }
+        }
+        if (data) {
+          // Check for binary plist (starts with bplist00) — try to decode as text anyway
+          const text = new TextDecoder('utf-8', {fatal:false}).decode(data);
+          if (text.includes('CFBundleIdentifier') || text.includes('CFBundleVersion')) {
+            return text;
+          }
+        }
+      }
+      i = dataStart + compSize;
+    } else {
+      i++;
+    }
+  }
+  return null;
+}
+
+// Minimal inflate-raw using DecompressionStream (available in modern browsers)
+async function inflateRawAsync(compressed) {
+  const ds = new DecompressionStream('deflate-raw');
+  const writer = ds.writable.getWriter();
+  writer.write(compressed);
+  writer.close();
+  const chunks = [];
+  const reader = ds.readable.getReader();
+  while (true) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const total = chunks.reduce((a,c)=>a+c.length,0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  return out;
+}
+
+function inflateRaw(compressed, expectedSize) {
+  // Synchronous stub — returns empty; async version used below
+  throw new Error('use async');
+}
+
+// We'll override parseIPA to be async with DecompressionStream
+async function parseIPA(file) {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  const result = await extractInfoPlistAsync(bytes);
+  if (!result) return {};
+  return parsePlistXml(result);
+}
+
+async function extractInfoPlistAsync(bytes) {
+  let i = 0;
+  while (i < bytes.length - 4) {
+    if (bytes[i]===0x50&&bytes[i+1]===0x4b&&bytes[i+2]===0x03&&bytes[i+3]===0x04) {
+      const compression = readU16(bytes, i+8);
+      const compSize    = readU32(bytes, i+18);
+      const uncompSize  = readU32(bytes, i+22);
+      const nameLen     = readU16(bytes, i+26);
+      const extraLen    = readU16(bytes, i+28);
+      const name        = readStr(bytes, i+30, nameLen);
+      const dataStart   = i + 30 + nameLen + extraLen;
+      if (/^Payload\/[^/]+\.app\/Info\.plist$/.test(name)) {
+        let data;
+        if (compression === 0) {
+          data = bytes.slice(dataStart, dataStart + uncompSize);
+        } else if (compression === 8) {
+          try {
+            const compressed = bytes.slice(dataStart, dataStart + compSize);
+            data = await inflateRawAsync(compressed);
+          } catch(e) { return null; }
+        }
+        if (data) {
+          const text = new TextDecoder('utf-8',{fatal:false}).decode(data);
+          if (text.includes('CFBundleIdentifier')||text.includes('CFBundleVersion')) return text;
+          // binary plist — skip, return partial meta
+          return null;
+        }
+      }
+      i = dataStart + Math.max(compSize, 1);
+    } else { i++; }
+  }
+  return null;
+}
+
+function readU16(b,i){ return b[i]|(b[i+1]<<8); }
+function readU32(b,i){ return (b[i]|(b[i+1]<<8)|(b[i+2]<<16)|(b[i+3]<<24))>>>0; }
+function readStr(b,i,len){ return new TextDecoder().decode(b.slice(i,i+len)); }
+
+function parsePlistXml(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'text/xml');
+  const keys = doc.querySelectorAll('key');
+  const map = {};
+  keys.forEach(k => {
+    const val = k.nextElementSibling;
+    if (val) map[k.textContent.trim()] = val.textContent.trim();
+  });
+  return {
+    bundleId:      map['CFBundleIdentifier']  || '',
+    bundleVersion: map['CFBundleVersion']     || map['CFBundleShortVersionString'] || '',
+    appName:       map['CFBundleDisplayName'] || map['CFBundleName'] || '',
+  };
+}
+
+// ─── GITHUB API ───────────────────────────────────────────────────────────────
+function ghFetch(path, token, opts={}) {
+  return fetch(`https://api.github.com/${path}`, {
+    ...opts,
+    headers: {
+      'Authorization': `token ${token || cfg.token}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(opts.headers||{}),
+    }
+  });
+}
+
+async function createRelease(tag, appName, version) {
+  const r = await ghFetch(`repos/${cfg.user}/${cfg.repo}/releases`, cfg.token, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      tag_name: tag,
+      name: `${appName} ${version}`,
+      body: `Ad-hoc build uploaded via IPA Drop`,
+      draft: false,
+      prerelease: false,
+    })
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(()=>({}));
+    throw new Error(`Failed to create release: ${err.message || r.status}`);
+  }
+  const data = await r.json();
+  return data.id;
+}
+
+async function uploadAsset(releaseId, file, assetName, onProgress) {
+  // GitHub's upload API requires Content-Length — we read as ArrayBuffer
+  const buf = await file.arrayBuffer();
+
+  // Use XMLHttpRequest for upload progress
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST',
+      `https://uploads.github.com/repos/${cfg.user}/${cfg.repo}/releases/${releaseId}/assets?name=${encodeURIComponent(assetName)}`
+    );
+    xhr.setRequestHeader('Authorization', `token ${cfg.token}`);
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    xhr.setRequestHeader('Accept', 'application/vnd.github+json');
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded/e.total); };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText).browser_download_url); }
+        catch(e) { reject(new Error('Could not parse upload response')); }
+      } else {
+        reject(new Error(`Upload failed: ${xhr.status} — ${xhr.responseText}`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.send(buf);
+  });
+}
+
+async function getFileSha(path) {
+  const r = await ghFetch(`repos/${cfg.user}/${cfg.repo}/contents/${path}`);
+  if (r.status === 404) return null;
+  const d = await r.json();
+  return d.sha || null;
+}
+
+async function commitFile(path, content, message) {
+  const sha = await getFileSha(path);
+  const body = {
+    message,
+    content: btoa(unescape(encodeURIComponent(content))),
+  };
+  if (sha) body.sha = sha;
+  const r = await ghFetch(`repos/${cfg.user}/${cfg.repo}/contents/${path}`, cfg.token, {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(()=>({}));
+    throw new Error(`Failed to commit ${path}: ${err.message || r.status}`);
+  }
+}
+
+async function ensureIndexPage(appName, version, manifestUrl) {
+  const html = buildIndexPage(appName, version, manifestUrl);
+  await commitFile('index.html', html, `release: ${appName} ${version}`);
+  // Ensure the Pages workflow file exists
+  await ensureWorkflow();
+}
+
+async function ensureWorkflow() {
+  const path = '.github/workflows/deploy.yml';
+  const existing = await getFileSha(path);
+  if (existing) return; // already there
+  const yml = `name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - id: deployment
+        uses: actions/deploy-pages@v4
+`;
+  await commitFile(path, yml, 'ci: add Pages deploy workflow');
+}
+
+// ─── BUILDERS ────────────────────────────────────────────────────────────────
+function buildPlist(ipaUrl, bundleId, version, appName, pagesBase) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>items</key>
+  <array>
+    <dict>
+      <key>assets</key>
+      <array>
+        <dict>
+          <key>kind</key><string>software-package</string>
+          <key>url</key><string>${ipaUrl}</string>
+        </dict>
+        <dict>
+          <key>kind</key><string>full-size-image</string>
+          <key>needs-shine</key><false/>
+          <key>url</key><string>${pagesBase}/icon-512.png</string>
+        </dict>
+        <dict>
+          <key>kind</key><string>display-image</string>
+          <key>needs-shine</key><false/>
+          <key>url</key><string>${pagesBase}/icon-57.png</string>
+        </dict>
+      </array>
+      <key>metadata</key>
+      <dict>
+        <key>bundle-identifier</key><string>${bundleId}</string>
+        <key>bundle-version</key><string>${version}</string>
+        <key>kind</key><string>software</string>
+        <key>title</key><string>${appName}</string>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>`;
+}
+
+function buildIndexPage(appName, version, manifestUrl) {
+  const installUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(manifestUrl)}`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Install ${appName}</title>
+<style>
+  body{font-family:-apple-system,sans-serif;background:#f5f5f7;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:1rem}
+  .card{background:#fff;border-radius:20px;padding:2.5rem 2rem;max-width:360px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+  .icon{font-size:4rem;margin-bottom:1rem}
+  h1{font-size:1.4rem;font-weight:700;margin-bottom:.3rem}
+  .ver{color:#888;font-size:.85rem;margin-bottom:1.5rem}
+  .warn{background:#fff3cd;border-radius:10px;padding:.8rem;font-size:.8rem;color:#856404;margin-bottom:1.5rem;text-align:left}
+  .btn{display:block;background:#007aff;color:#fff;padding:1rem;border-radius:14px;text-decoration:none;font-weight:600;font-size:1rem;margin-bottom:.75rem}
+  .steps{text-align:left;font-size:.82rem;color:#555;line-height:1.8}
+  .ios-only{display:none;background:#ffe0e0;border-radius:10px;padding:.9rem;font-size:.82rem;color:#c00;margin-bottom:1rem}
+  .is-desktop .ios-only{display:block}.is-desktop .btn{display:none}.is-desktop .steps{display:none}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="icon">📲</div>
+  <h1>${appName}</h1>
+  <div class="ver">Version ${version} · Ad Hoc</div>
+  <div class="warn">⚠ Your device UDID must be registered in the provisioning profile.</div>
+  <div class="ios-only">Open this page in <strong>Safari on your iPhone or iPad</strong> to install.</div>
+  <a class="btn" href="${installUrl}">Install Now</a>
+  <div class="steps">
+    1. Tap <em>Install Now</em> above<br>
+    2. Settings → General → VPN &amp; Device Management → Trust<br>
+    3. Launch from Home Screen
+  </div>
+</div>
+<script>
+  if(!/iphone|ipad|ipod/i.test(navigator.userAgent))
+    document.getElementById('card').classList.add('is-desktop');
+</script>
+</body>
+</html>`;
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────────────────────
+function showProgress(file) {
+  document.getElementById('ipaName').textContent = file.name;
+  document.getElementById('ipaSize').textContent = formatBytes(file.size);
+  document.getElementById('progressCard').classList.add('visible');
+  buildStepRows();
+}
+
+function buildStepRows() {
+  const list = document.getElementById('stepsList');
+  list.innerHTML = '';
+  STEPS.forEach(s => {
+    list.innerHTML += `
+      <div class="step-row" id="step-${s.id}">
+        <div class="step-dot" id="dot-${s.id}">○</div>
+        <div>
+          <div class="step-label">${s.label}</div>
+          <div class="step-sub">${s.sub}</div>
+        </div>
+      </div>`;
+  });
+}
+
+function setStep(id, state) {
+  const row = document.getElementById(`step-${id}`);
+  const dot = document.getElementById(`dot-${id}`);
+  row.className = `step-row ${state}`;
+  dot.textContent = state === 'done' ? '✓' : state === 'error-step' ? '✕' : '●';
+}
+
+function setProgress(pct) {
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+function showResult(installUrl, manifestUrl) {
+  document.getElementById('installLinkInput').value = installUrl;
+  document.getElementById('resultCard').classList.add('visible');
+
+  // QR code
+  const qrWrap = document.getElementById('qrWrap');
+  qrWrap.innerHTML = '';
+  new QRCode(qrWrap, {
+    text: installUrl,
+    width: 160, height: 160,
+    colorDark: '#1a1916', colorLight: '#f0fdf4',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+function copyLink() {
+  const val = document.getElementById('installLinkInput').value;
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function showError(msg) {
+  // Mark current active step as error
+  STEPS.forEach(s => {
+    const row = document.getElementById(`step-${s.id}`);
+    if (row && row.classList.contains('active')) setStep(s.id, 'error-step');
+  });
+  const el = document.getElementById('errorMsg');
+  el.textContent = '⚠ ' + msg;
+  el.classList.add('visible');
+}
+
+function resetUI(full=true) {
+  document.getElementById('progressCard').classList.remove('visible');
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('errorMsg').classList.remove('visible');
+  document.getElementById('progressBar').style.width = '0%';
+  if (full) document.getElementById('fileInput').value = '';
+}
+
+function formatBytes(b) {
+  if (b > 1e9) return (b/1e9).toFixed(1) + ' GB';
+  if (b > 1e6) return (b/1e6).toFixed(1) + ' MB';
+  return (b/1e3).toFixed(0) + ' KB';
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+loadConfig();
+</script>
+</body>
+</html>
+`;
