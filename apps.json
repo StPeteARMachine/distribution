@@ -1,10 +1,10 @@
 [
   {
-    "name": "MyApp",
-    "bundle_id": "com.yourcompany.myapp",
+    "name": "6 portals v2",
+    "bundle_id": "com.brandoncote.portalssix",
     "versions": [
       {
-        "version": "1.0.1",
+        "version": "0.2.0",
         "date": "2026-05-07",
         "size": "372 MB",
         "manifest_url": "https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/manifests/1.0.1.plist"
