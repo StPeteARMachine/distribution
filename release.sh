@@ -14,11 +14,11 @@
 set -euo pipefail
 
 # ──────────────────────────── CONFIG — EDIT THESE ────────────────────────────
-GITHUB_USER="YOUR_GITHUB_USERNAME"
-REPO_NAME="YOUR_REPO_NAME"
-BUNDLE_ID="com.yourcompany.myapp"
-APP_NAME="MyApp"
-CONTACT_EMAIL="you@example.com"
+GITHUB_USER="StPeteARMachine"
+REPO_NAME="distribution"
+BUNDLE_ID="com.brandoncote.portalssix"
+APP_NAME="6 portals v2"
+CONTACT_EMAIL="brandoncote63@gmail.com"
 # ─────────────────────────────────────────────────────────────────────────────
 
 IPA_PATH="${1:-}"
